@@ -45,9 +45,9 @@ dati.clean.sf <- dati.clean |> sf::st_as_sf(coords = c("Lon", "Lat"), crs=4326 )
 dati.centroComune.sf <- dati |> sf::st_as_sf(coords = c("LonCentroComune", "LatCentroComune"), crs=4326 )
 
 ggplot() + 
-  geom_sf(data = comuniVeneto,  color = "#eaeaea44", alpha=0.4) +
-  geom_sf(data = dati.centroComune.sf,  aes(color = "Coordinate Originali"), alpha=0.5, size = 1.1 ) +
-  geom_sf(data = dati.clean.sf, aes(color = "Coordinate Comune"),  alpha=0.5, size = 1.1) +
+  geom_sf(data = comuniVeneto,  color = "#cccccc", fill="#eaeaea", alpha=0.2) +
+  geom_sf(data = dati.clean.sf,  aes(color = "Coordinate Originali"), alpha=0.5, size = 1.1 ) +
+  geom_sf(data = dati.centroComune.sf, aes(color = "Coordinate Comune"),  alpha=0.5, size = 1.1) +
   scale_color_manual(
     name = NULL,
     values = c("Coordinate Originali" = "red",
@@ -60,11 +60,11 @@ ggplot() +
     legend.justification = c("left", "top"),
     legend.background = element_rect(fill = alpha("white", 0.4),
                                      linewidth = 0, color = "black"),
-    panel.grid.major = element_line(size = 0.2),
+    panel.grid.major = element_line(size = 0.1),
     text = element_text(size = 12)
   ) +
   labs(title = "Campionamento",
        subtitle = "Veneto Flavescenza Dorata",
-       caption = "Data: xxxx")
+       caption = "NB: 100 punti (in rosso) su 200 hanno coordinate, al resto è stata \nassegnata la coordinata del centroide del comune (in blu)")
 
 
