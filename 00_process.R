@@ -131,4 +131,5 @@ for(dist in distanze){
 dt.final <- do.call(cbind, risultati)
 dt.final.long <- do.call(rbind, risultati)
 
- 
+dati.clean.variabili <- cbind(dati.clean, dt.final)
+save(dati.clean.variabili, file="output/datiDistanzaBosco.rda")
