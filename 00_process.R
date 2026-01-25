@@ -26,43 +26,52 @@ if(!file.exists("data/comuniVeneto.rda")){
 }
 
 ## LEGGO I DATI ----
-dati <-  readxl::read_xlsx("data/DATASET SUBSAMPLE.xlsx")
+dati <-  readxl::read_xls("data/DATASET-GIS_da inviare.xls")
 ## se alcuni punti non hanno lat long, possiamo inserire il centroide del comune 
-senzaCoordinate <- which(is.na(dati$Lon))
-centroidiComuni <- sf::st_centroid(comuniVeneto$geometry)
-mat <- charmatch(paste(dati$Provincia, dati$Comune),  
-                 paste(comuniVeneto$SIGLA, comuniVeneto$COMUNE) )
-## se nomi dei comuni non corrispondono dove non ci sono coordinate,
-##  bisogna risolvere in qualche modo - per ora eliminiamo quelli senza coordinate
-##  e senza match nome comune
-matNA <- which(is.na(mat))
-print(dati$Comune[matNA])
-###############################
-cent <- centroidiComuni[ mat , "geometry" ]  |> sf::st_transform(4326) |> st_coordinates()
-
-
-dati <- dati |> mutate(LonCentroComune = cent[,1] , LatCentroComune = cent[,2],
-                       LonFin = cent[,1] , LatFin = cent[,2] )
-
-dati[!is.na(dati$Lat), c("LonFin","LatFin")]  <- dati[!is.na(dati$Lat), c("Lon","Lat")] 
- 
-## tolgo gli NA
-dati.clean <-  dati[!is.na(dati$Lat),] 
-dati.clean.sf <- dati.clean |> sf::st_as_sf(coords = c("Lon", "Lat"), crs=4326 )
+senzaCoordinate <- which(is.na(dati$Lon)|is.na(dati$Lat))
+if(length(senzaCoordinate)!=0){
+  stop("Problema mancano ", length(senzaCoordinate), " coordinate")
   
-dati.centroComune.sf <- dati |> sf::st_as_sf(coords = c("LonCentroComune", "LatCentroComune"), crs=4326 )
-dati.fin.sf <- dati |> sf::st_as_sf(coords = c("LonFin","LatFin"), crs=4326 )
+  ## da fare sotto se mancano coordinate
+  ## 
+  centroidiComuni <- sf::st_centroid(comuniVeneto$geometry)
+  mat <- charmatch(paste(dati$Provincia, dati$Comune),  
+                   paste(comuniVeneto$SIGLA, comuniVeneto$COMUNE) )
+  ## se nomi dei comuni non corrispondono dove non ci sono coordinate,
+  ##  bisogna risolvere in qualche modo - per ora eliminiamo quelli senza coordinate
+  ##  e senza match nome comune
+  matNA <- which(is.na(mat))
+  print(dati$Comune[matNA])
+  ###############################
+  cent <- centroidiComuni[ mat , "geometry" ]  |> sf::st_transform(4326) |> st_coordinates()
+  
+  
+  dati <- dati |> mutate(LonCentroComune = cent[,1] , LatCentroComune = cent[,2],
+                         LonFin = cent[,1] , LatFin = cent[,2] )
+  
+  dati[!is.na(dati$Lat), c("LonFin","LatFin")]  <- dati[!is.na(dati$Lat), c("Lon","Lat")] 
+  
+  ## tolgo gli NA
+  dati.clean <-  dati[!is.na(dati$Lat),] 
+  dati.clean.sf <- dati.clean |> sf::st_as_sf(coords = c("Lon", "Lat"), crs=4326 )
+  
+  dati.centroComune.sf <- dati |> sf::st_as_sf(coords = c("LonCentroComune", "LatCentroComune"), crs=4326 )
+  dati.fin.sf <- dati |> sf::st_as_sf(coords = c("LonFin","LatFin"), crs=4326 )
+  
+}
+
+dati.clean.sf <- dati |> sf::st_as_sf(coords = c("Lon","Lat"), crs=4326 )
+
 
 if(plotit){
   ggplot() + 
     geom_sf(data = comuniVeneto,  color = "#cccccc", fill="#eaeaea", alpha=0.2) +
-    geom_sf(data = dati.clean.sf,  aes(color = "Coordinate Originali"), alpha=0.5, size = 1.1 ) +
-    geom_sf(data = dati.centroComune.sf, aes(color = "Coordinate Comune"),  alpha=0.5, size = 1.1) +
-    scale_color_manual(
-      name = NULL,
-      values = c("Coordinate Originali" = "red",
-                 "Coordinate Comune" = "blue")
-    ) +
+    geom_sf(data = dati.clean.sf,color = "red", alpha=0.5, size = 0.2 ) +
+    # geom_sf(data = dati.centroComune.sf, aes(color = "Coordinate Comune"),  alpha=0.5, size = 1.1) +
+    # scale_color_manual(
+    #   name = NULL,
+    #   values = c("Coordinate Originali" = "red")
+    # ) +
     theme_minimal() +
     theme(
       plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
@@ -74,8 +83,9 @@ if(plotit){
       text = element_text(size = 12)
     ) +
     labs(title = "Campionamento",
-         subtitle = "Veneto Flavescenza Dorata",
-         caption = "NB: 100 punti (in rosso) su 200 hanno coordinate, al resto è stata \nassegnata la coordinata del centroide del comune (in blu)")
+         subtitle = "Veneto Flavescenza Dorata" 
+         # caption = "NB: 100 punti (in rosso) su 200 hanno coordinate, al resto è stata \nassegnata la coordinata del centroide del comune (in blu)"
+         )
   
 }
 
@@ -130,6 +140,6 @@ for(dist in distanze){
 
 dt.final <- do.call(cbind, risultati)
 dt.final.long <- do.call(rbind, risultati)
-
-dati.clean.variabili <- cbind(dati.clean, dt.final)
+# dati.clean <- dati.clean.sf |> sf::st_drop_geometry()
+dati.clean.variabili <- cbind(dati.clean.sf, dt.final)
 save(dati.clean.variabili, file="output/datiDistanzaBosco.rda")

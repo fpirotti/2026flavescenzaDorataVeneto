@@ -1,3 +1,3 @@
 # 2026flavescenzaDorataVeneto
 
-![](images/clipboard-3834480409.png)
+![](images/clipboard-3448104613.png)
